@@ -52,6 +52,36 @@ const getDisplayedList = (category: typeof materialList[0]) => {
   return category.list.slice(0, 6); // 默认截取前 6 个
 };
 
+const addObjectToCanvas = (obj: fabric.FabricObject) => {
+  if (!store.canvas) return;
+
+  // 计算自适应缩放比例：限制素材在画布短边的 50% 以内
+  const canvasWidth = store.canvas.width || 800;
+  const canvasHeight = store.canvas.height || 600;
+  const maxSize = Math.min(canvasWidth, canvasHeight) * 0.5;
+  const currentWidth = obj.width || 100;
+  const currentHeight = obj.height || 100;
+  const scale = Math.min(maxSize / currentWidth, maxSize / currentHeight, 1);
+
+  obj.scale(scale);
+  store.canvas.add(obj);
+
+  // 使用原生的 viewportCenter 将对象放置在画布视野居中
+  const vpCenter = store.canvas.getVpCenter();
+  obj.set({
+    left: vpCenter.x,
+    top: vpCenter.y,
+    originX: 'center',
+    originY: 'center',
+  });
+
+  store.canvas.setActiveObject(obj);
+  store.setSelectedElement(obj);
+
+  store.canvas.renderAll();
+  store.saveHistory();
+};
+
 const addMaterialToCanvas = async (url: string) => {
   if (!store.canvas) return;
 
@@ -60,43 +90,10 @@ const addMaterialToCanvas = async (url: string) => {
       const { objects, options } = await fabric.loadSVGFromURL(url);
       const validObjects = objects.filter((obj): obj is fabric.FabricObject => obj !== null);
       const group = fabric.util.groupSVGElements(validObjects, options);
-      // 默认缩小一半，防止过大
-      group.scale(0.5);
-      store.canvas.add(group);
-
-      // 使用原生的 viewportCenter 将对象放置在画布视野居中
-      const vpCenter = store.canvas.getVpCenter();
-      group.set({
-        left: vpCenter.x,
-        top: vpCenter.y,
-        originX: 'center',
-        originY: 'center',
-      });
-
-      store.canvas.setActiveObject(group);
-      store.setSelectedElement(group);
-
-      store.canvas.renderAll();
-      store.saveHistory();
+      addObjectToCanvas(group);
     } else {
-      // png 等位图
-      const img = await fabric.Image.fromURL(url);
-      img.scale(0.5);
-      store.canvas.add(img);
-
-      const vpCenter = store.canvas.getVpCenter();
-      img.set({
-        left: vpCenter.x,
-        top: vpCenter.y,
-        originX: 'center',
-        originY: 'center',
-      });
-
-      store.canvas.setActiveObject(img);
-      store.setSelectedElement(img);
-
-      store.canvas.renderAll();
-      store.saveHistory();
+      const img = await fabric.FabricImage.fromURL(url);
+      addObjectToCanvas(img);
     }
   } catch (error) {
     ElMessage.error('加载素材失败，请检查资源路径！');
