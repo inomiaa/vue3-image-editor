@@ -8,6 +8,12 @@
                 </el-icon>
                 <span>元素</span>
             </div>
+            <div class="tab-item" :class="{ active: activeTab === 'material' }" @click="activeTab = 'material'">
+                <el-icon>
+                    <Grid />
+                </el-icon>
+                <span>素材</span>
+            </div>
             <div class="tab-item" :class="{ active: activeTab === 'layer' }" @click="activeTab = 'layer'">
                 <el-icon>
                     <Files />
@@ -19,6 +25,7 @@
         <!-- 内容区域 -->
         <div class="panel-content-area">
             <ElementPanel v-show="activeTab === 'element'" />
+            <MaterialPanel v-show="activeTab === 'material'" />
             <LayerPanel v-show="activeTab === 'layer'" />
         </div>
     </aside>
@@ -28,7 +35,8 @@
 import { ref } from 'vue';
 import ElementPanel from './ElementPanel.vue';
 import LayerPanel from './LayerPanel.vue';
-import { Picture, Files } from '@element-plus/icons-vue';
+import MaterialPanel from './MaterialPanel.vue';
+import { Picture, Files, Grid } from '@element-plus/icons-vue';
 
 const activeTab = ref('element');
 </script>
